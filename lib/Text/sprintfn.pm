@@ -116,6 +116,13 @@ or create a tied hash which can consult hashes for you:
  printfn $format, \%h, ...;
 
 
+=head1 IMPLEMENTATION NOTES
+
+Currently every format will be processed using a separate invocation of
+sprintf(), so this "%d %(var)s %f" will call sprintf() three times. This might
+be fixed in the future.
+
+
 =head1 SEE ALSO
 
 sprintf() section on L<perlfunc>
