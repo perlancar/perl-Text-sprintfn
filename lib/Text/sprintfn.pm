@@ -8,9 +8,62 @@ require Exporter;
 our @ISA       = qw(Exporter);
 our @EXPORT    = qw(sprintfn printfn);
 
+my  $re1   = qr/[^)]+/s;
+our $regex = qr{(?<fmt>
+                    %
+                       (?<pi> \d+\$ | \((?<npi>$re1)\)\$?)? # parameter index
+                       (?<flags>[ +0#-]*)
+                       (?<vflag>(?<a2>\*?)[v]?)
+                       (?<width> -?\d+ | (?<a1>\*?)(?:\d+\$)? |
+                           \((?<nwidth>$re1)\))?
+                       (?<prec> \. (?: \d+ | (?<a3>\*) | \((?<nprec>$re1)\) ) )?
+                       (?<conv> [%csduoxefgXEGbBpniDUOF])
+             )}x;
+
 sub sprintfn {
-    my ($format, $hash_arg, @args) = @_;
-    # XXX
+    my ($format, @args) = @_;
+
+    my $hash;
+    $hash = shift(@args) if ref($args[0]) eq 'HASH';
+    return sprintf($format, @args) if !$hash;
+
+    my ($npi, $nwidth, $nprec, $fmt, $res);
+    my $skip;
+    $format =~ s{$regex}{
+        $npi    = $+{npi};
+        $nwidth = $+{nwidth};
+        $nprec  = $+{nprec};
+        $skip   = 0;
+        $skip++ if $+{a1};
+        $skip++ if $+{a2};
+        $skip++ if $+{a3};
+        if (defined($npi) || defined($nwidth) || defined($nprec)) {
+            $fmt = join(
+                "",
+                grep {defined} (
+                    "%",
+                    defined($npi) ? "" : $+{pi},
+                    $+{flags},
+                    $+{vflag},
+                    defined($nwidth) ? $hash->{$nwidth} : $+{width},
+                    defined($nprec) ? ".".($hash->{$nprec} // "") : $+{prec},
+                   $+{conv}
+                )
+            );
+            unshift @args, $hash->{$npi} if defined($npi);
+            $res = sprintf($fmt, @args);
+            # DEBUG
+            #$res="[DBG1:fmt=<$fmt> args=(".join(",",@args).") res=<$res>]";
+            do { shift @args; $skip-- }  if defined $npi;
+        } else {
+            $res = sprintf($+{fmt}, @args);
+            # DEBUG
+            #$res="[DBG2:fmt=<$+{fmt}> args=(".join(",",@args).") res=<$res>]";
+        }
+        shift @args for $skip+1;
+        $res;
+    }xeg;
+    $format;
 }
 
 sub printfn {
@@ -55,11 +108,11 @@ parentheses, i.e. "(NAME)". They can occur in format parameter index:
  %(two)d     # $ is optional
  %(two)$d    # same
 
-or in minimum width:
+or in width:
 
- %-10d       # sprintf version, use minimum width of 10
- %-(width)d  # like sprintf, but use minimum width from hash key 'width'
- %(var)-(width)d  # format hash key 'var' w/ minimum width from hash key 'width'
+ %-10d       # sprintf version, use (minimum) width of 10
+ %-(width)d  # like sprintf, but use width from hash key 'width'
+ %(var)-(width)d  # format hash key 'var' with width from hash key 'width'
 
 or in precision:
 
@@ -74,6 +127,10 @@ the argument, example:
  sprintfn "<%(v1)s> <%2$d> <%d>", {v1=>10}, 0, 1, 2; # "<10> <2> <0>"
 
 Like sprintf(), if format is unknown/erroneous, it will be printed as-is.
+
+There is currently no way to escape ")" in named parameter, e.g.:
+
+ %(var containing ))s
 
 =head2 printfn
 
@@ -118,9 +175,8 @@ or create a tied hash which can consult hashes for you:
 
 =head1 IMPLEMENTATION NOTES
 
-Currently every format will be processed using a separate invocation of
-sprintf(), so this "%d %(var)s %f" will call sprintf() three times. This might
-be fixed in the future.
+Currently every format will be converted using a separate sprintf() invocation.
+So "<%d> <%(var)s> <%.(var2)f>" will result in three calls.
 
 
 =head1 SEE ALSO
