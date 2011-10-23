@@ -8,20 +8,24 @@ require Exporter;
 our @ISA       = qw(Exporter);
 our @EXPORT    = qw(sprintfn printfn);
 
+our $distance  = 10;
+
 my  $re1   = qr/[^)]+/s;
-our $regex = qr{(?<fmt>
+my  $re2   = qr{(?<fmt>
                     %
-                       (?: (?<dpi>\d+)\$ | \((?<npi>$re1)\)\$?)?
-                       (?<flags>[ +0#-]*)
-                       (?<vflag>(?<wvflag>\*?)[v]?)
-                       (?: (?<dwidth>-?\d+) |
-                           (?<wwidth>\*?)(?:(?<wwidthd>\d+)\$)? |
+                       (?<pi> \d+\$ | \((?<npi>$re1)\)\$?)?
+                       (?<flags> [ +0#-]+)?
+                       (?<vflag> \*?[v])?
+                       (?<width> -?\d+ |
+                           \*\d+\$? |
                            \((?<nwidth>$re1)\))?
-                       (?: \.
-                           (?: (?<dprec>\d+) | (?<wprec>\*) |
-                           \((?<nprec>$re1)\) ) )?
+                       (?<dot>\.?)
+                       (?<prec>
+                           (?: \d+ | \* |
+                           \((?<nprec>$re1)\) ) ) ?
                        (?<conv> [%csduoxefgXEGbBpniDUOF])
-             )}x;
+                   )}x;
+our $regex = qr{($re2|%|[^%]+)}s;
 
 sub sprintfn {
     my ($format, @args) = @_;
@@ -29,93 +33,60 @@ sub sprintfn {
     my $hash;
     if (ref($args[0]) eq 'HASH') {
         $hash = shift(@args);
-        splice @_, 1, 1; # remove hash arg so it doesn't interfere with %2$d
     }
     return sprintf($format, @args) if !$hash;
 
-    # we use sprintf() for each format, we convert the named parameters and
-    # handle the * and \d+$ stuffs ourselves.
+    my %indexes; # key = $hash key, value = index for @args
+    push @args, (undef) x $distance;
 
-    my ($shift, $pi, $flags, $vflag, $width, $prec, $conv, $fmt, $res);
     $format =~ s{$regex}{
-        # careful not to use any regex here
-        $shift = 0;
-        my $w_in_vflag;
+        # take care not to use any regex here (resets %+)
+        my $res;
+        my ($pi, $width, $prec);
+        if ($+{fmt}) {
 
-        $flags = $+{flags};
-
-        if ($+{wvflag}) {
-            $vflag = $+{vflag};
-            unshift @args, $args[0];
-            $shift += 2;
-            $w_in_vflag++;
-        } elsif ($+{vflag}) {
-            $vflag = $+{vflag};
-        } else {
-            $vflag = "";
-        }
-
-        if (defined $+{dwidth}) {
-            $width = $+{dwidth};
-        } elsif ($+{wwidth}) {
-            if (defined $+{wwidthd}) {
-                $width = int($_[ $+{wwidthd} ]);
+            if (defined $+{npi}) {
+                my $i = $indexes{ $+{npi} };
+                if (!$i) {
+                    $i = @args + 1;
+                    push @args, $hash->{ $+{npi} };
+                    $indexes{ $+{npi} } = $i;
+                }
+                $pi = "${i}\$";
             } else {
-                $width = int(shift(@args));
+                $pi = $+{pi};
             }
-        } elsif (defined $+{nwidth}) {
-            $width = int($hash->{ $+{nwidth} });
-        } else {
-            $width = "";
-        }
 
-        if (defined $+{dprec}) {
-            $prec = ".$+{dprec}";
-        } elsif ($+{wprec}) {
-            $prec = "." . int(shift @args);
-        } elsif (defined $+{nprec}) {
-            $prec = "." . int($hash->{ $+{nprec} });
-        } else {
-            $prec = "";
-        }
-
-        if (defined $+{dpi}) {
-            if ($w_in_vflag) {
-                $pi = q[2$];
-                splice @args, 1, 0, $_[ $+{dpi} ];
+            if (defined $+{nwidth}) {
+                $width = $hash->{ $+{nwidth} };
             } else {
-                $pi = q[1$];
-                unshift @args, $_[ $+{dpi} ];
+                $width = $+{width};
             }
-        } elsif (defined $+{npi}) {
-            if ($w_in_vflag) {
-                $pi = q[2$];
-                splice @args, 1, 0, $hash->{ $+{npi} };
+
+            if (defined $+{nprec}) {
+                $prec = $hash->{ $+{nprec} };
             } else {
-                $pi = q[1$];
-                unshift @args, $hash->{ $+{npi} };
+                $prec = $+{prec};
             }
+
+            $res = join("",
+                grep {defined} (
+                    "%",
+                    $pi, $+{flags}, $+{vflag},
+                    $width, $+{dot}, $prec, $+{conv})
+                );
         } else {
-            $pi = "";
+            my $i = @args + 1;
+            push @args, $1;
+            $res = "\%${i}\$s";
         }
-
-        $conv = $+{conv};
-
-        $fmt = "%$pi$flags$vflag$width$prec$conv";
-        $res = sprintf($fmt, @args);
-
-        # DEBUG
-        #my %a = %+; print "\%+={".join(", ", %a)."} \n";
-        #print "\@args=(".join(", ", @args).") \n";
-        #print "[DBG:pi=<$pi> flags=<$flags> vflag=<$vflag> width=<$width> ".
-        #    "prec=<$prec> conv=<$conv> fmt=<$fmt> ".
-        #        "args=(".join(",",@args).") res=<$res>]\n";
-
-        $shift++;
-        shift @args for $shift;
         $res;
     }xeg;
-    $format;
+
+    # DEBUG
+    #use Data::Dump; dd [$format, @args];
+
+    sprintf $format, @args;
 }
 
 sub printfn {
@@ -223,12 +194,6 @@ or create a tied hash which can consult hashes for you:
 
  tie %h, 'Your::Module', \%h1, \%h2, \%h3;
  printfn $format, \%h, ...;
-
-
-=head1 IMPLEMENTATION NOTES
-
-Currently every format will be converted using a separate sprintf() invocation.
-So "<%d> <%(var)s> <%.(var2)f>" will result in three calls.
 
 
 =head1 SEE ALSO
