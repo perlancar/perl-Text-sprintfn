@@ -100,30 +100,36 @@ sub printfn {
 
  use Text::sprintfn; # by default exports sprintfn() and printfn()
 
- printfn("<%2d> <%(foo)-(bar).2f> <%0$04d>", {foo=>1, bar=>5}, 3, 42);
- # < 3> <1.00 > <0003>
+ # with no hash, behaves just like printf
+ printfn '<%04d>', 1, 2; # <0001>
 
- print sprintf "<%-4d>", 123; # no hash provided, acts like normal sprintf()
- # <123 >
+ # named parameter
+ printfn '<%(v1)-4d>', {v1=>-2}; # <-2  >
+
+ # mixed named and positional
+ printfn '<%d> <%(v1)d> <%d>', {v1=>1}, 2, 3; # <2> <1> <3>
+
+ # named width
+ printfn "<%(v1)(v2).1f>", {v1=>3, v2=>4}; # <   3>
+
+ # named precision
+ printfn "<%(v1)(v2).(v2)f>", {v1=>3, v2=>4}; # <3.0000>
+
 
 =head1 DESCRIPTION
 
 This module provides sprintfn() and printfn(), which are like sprintf() and
 printf(), with the exception that they support named parameters from a hash.
 
-There exist other CPAN modules for string formatting with named parameter
-support, but this one focuses on interface simplicity and sprintf compatibility
-since most people are already familiar with it and it has several features.
-
 
 =head1 FUNCTIONS
 
-=head2 sprintfn FORMAT, HASH_ARG, OTHER_ARG, ...
+=head2 sprintfn $fmt, \%hash, ...
 
 If first argument after format is not a hash, sprintfn() will behave exactly
 like sprintf().
 
-If HASH_ARG is given, sprintfn() will look for named parameters in argument and
+If hash is given, sprintfn() will look for named parameters in argument and
 supply the values from the hash. Named parameters are surrounded with
 parentheses, i.e. "(NAME)". They can occur in format parameter index:
 
@@ -155,9 +161,23 @@ There is currently no way to escape ")" in named parameter, e.g.:
 
  %(var containing ))s
 
-=head2 printfn
+=head2 printfn $fmt, ...
 
-Equivalent to "print sprintf(@_)".
+Equivalent to: print sprintf($fmt, ...).
+
+
+=head1 RATIONALE
+
+There exist other CPAN modules for string formatting with named parameter
+support. Two of such modules are L<String::Formatter> and
+L<Text::Sprintf::Named>. This module is far simpler to use and retains all of
+the features of Perl's sprintf() (which we like, or perhaps hate, but
+nevertheless are familiar with).
+
+String::Formatter requires you to create a new formatter function first.
+Text::Sprintf::Named also accordingly requires you to instantiate an object
+first. There is currently no way to mix named and positional parameters. And you
+don't get the full features of sprintf().
 
 
 =head1 TIPS AND TRICKS
@@ -187,7 +207,7 @@ instead of
 You have several hashes (%h1, %h2, %h3) which should be consulted for values.
 You can either merge the hash first:
 
- %h = (%h1, %h2, %h3); # or one of several available module for hash merging
+ %h = (%h1, %h2, %h3); # or use one of several available module for hash merging
  printfn $format, \%h, ...;
 
 or create a tied hash which can consult hashes for you:
@@ -199,8 +219,6 @@ or create a tied hash which can consult hashes for you:
 =head1 SEE ALSO
 
 sprintf() section on L<perlfunc>
-
-L<String::Flogger>
 
 L<String::Formatter>
 
