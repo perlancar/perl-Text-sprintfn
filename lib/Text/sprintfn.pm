@@ -8,6 +8,8 @@ require Exporter;
 our @ISA       = qw(Exporter);
 our @EXPORT    = qw(sprintfn printfn);
 
+# VERSION
+
 our $distance  = 10;
 
 my  $re1   = qr/[^)]+/s;
