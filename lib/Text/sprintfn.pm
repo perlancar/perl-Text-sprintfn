@@ -165,7 +165,7 @@ There is currently no way to escape ")" in named parameter, e.g.:
 
 =head2 printfn $fmt, ...
 
-Equivalent to: print sprintf($fmt, ...).
+Equivalent to: print sprintfn($fmt, ...).
 
 
 =head1 RATIONALE
