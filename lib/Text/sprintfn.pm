@@ -170,7 +170,7 @@ Equivalent to: print sprintfn($fmt, ...).
 
 =head1 RATIONALE
 
-There exist other CPAN modules for string formatting with named parameter
+There exists other CPAN modules for string formatting with named parameter
 support. Two of such modules are L<String::Formatter> and
 L<Text::Sprintf::Named>. This module is far simpler to use and retains all of
 the features of Perl's sprintf() (which we like, or perhaps hate, but
