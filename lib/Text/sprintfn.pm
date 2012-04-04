@@ -198,11 +198,11 @@ instead of
 
 Writing
 
- sprintf $format, %hash, ...;
+ sprintfn $format, %hash, ...;
 
 instead of
 
- sprintf $format, \%hash, ...;
+ sprintfn $format, \%hash, ...;
 
 =head2 Alternative hashes
 
