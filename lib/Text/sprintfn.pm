@@ -209,7 +209,7 @@ instead of
 You have several hashes (%h1, %h2, %h3) which should be consulted for values.
 You can either merge the hash first:
 
- %h = (%h1, %h2, %h3); # or use one of several available module for hash merging
+ %h = (%h1, %h2, %h3); # or use some hash merging module
  printfn $format, \%h, ...;
 
 or create a tied hash which can consult hashes for you:
