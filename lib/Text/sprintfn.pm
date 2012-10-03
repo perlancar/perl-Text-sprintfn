@@ -42,40 +42,41 @@ sub sprintfn {
     push @args, (undef) x $distance;
 
     $format =~ s{$regex}{
-        # take care not to use any regex here (resets %+)
+        my %m = %+;
+
         my $res;
         my ($pi, $width, $prec);
-        if ($+{fmt}) {
+        if ($m{fmt}) {
 
-            if (defined $+{npi}) {
-                my $i = $indexes{ $+{npi} };
+            if (defined $m{npi}) {
+                my $i = $indexes{ $m{npi} };
                 if (!$i) {
                     $i = @args + 1;
-                    push @args, $hash->{ $+{npi} };
-                    $indexes{ $+{npi} } = $i;
+                    push @args, $hash->{ $m{npi} };
+                    $indexes{ $m{npi} } = $i;
                 }
                 $pi = "${i}\$";
             } else {
-                $pi = $+{pi};
+                $pi = $m{pi};
             }
 
-            if (defined $+{nwidth}) {
-                $width = $hash->{ $+{nwidth} };
+            if (defined $m{nwidth}) {
+                $width = $hash->{ $m{nwidth} };
             } else {
-                $width = $+{width};
+                $width = $m{width};
             }
 
-            if (defined $+{nprec}) {
-                $prec = $hash->{ $+{nprec} };
+            if (defined $m{nprec}) {
+                $prec = $hash->{ $m{nprec} };
             } else {
-                $prec = $+{prec};
+                $prec = $m{prec};
             }
 
             $res = join("",
                 grep {defined} (
                     "%",
-                    $pi, $+{flags}, $+{vflag},
-                    $width, $+{dot}, $prec, $+{conv})
+                    $pi, $m{flags}, $m{vflag},
+                    $width, $m{dot}, $prec, $m{conv})
                 );
         } else {
             my $i = @args + 1;
