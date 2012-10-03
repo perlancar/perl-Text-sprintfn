@@ -29,6 +29,36 @@ my  $re2   = qr{(?<fmt>
                    )}x;
 our $regex = qr{($re2|%|[^%]+)}s;
 
+# faster version, without using named capture
+if (1) {
+    $regex = qr{( #all=1
+                    ( #fmt=2
+                        %
+                        (#pi=3
+                            \d+\$ | \(
+                            (#npi=4
+                                [^)]+)\)\$?)?
+                        (#flags=5
+                            [ +0#-]+)?
+                        (#vflag=6
+                            \*?[v])?
+                        (#width=7
+                            -?\d+ |
+                            \*\d+\$? |
+                            \((#nwidth=8
+                                [^)]+)\))?
+                        (#dot=9
+                            \.?)
+                        (#prec=10
+                            (?: \d+ | \* |
+                                \((#nprec=11
+                                    [^)]+)\) ) ) ?
+                        (#conv=12
+                            [%csduoxefgXEGbBpniDUOF])
+                    ) | % | [^%]+
+                )}xs;
+}
+
 sub sprintfn {
     my ($format, @args) = @_;
 
@@ -42,41 +72,37 @@ sub sprintfn {
     push @args, (undef) x $distance;
 
     $format =~ s{$regex}{
-        my %m = %+;
+        my ($all, $fmt, $pi, $npi, $flags,
+            $vflag, $width, $nwidth, $dot, $prec,
+            $nprec, $conv) =
+            ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12);
 
         my $res;
-        my ($pi, $width, $prec);
-        if ($m{fmt}) {
+        if ($fmt) {
 
-            if (defined $m{npi}) {
-                my $i = $indexes{ $m{npi} };
+            if (defined $npi) {
+                my $i = $indexes{$npi};
                 if (!$i) {
                     $i = @args + 1;
-                    push @args, $hash->{ $m{npi} };
-                    $indexes{ $m{npi} } = $i;
+                    push @args, $hash->{$npi};
+                    $indexes{$npi} = $i;
                 }
                 $pi = "${i}\$";
-            } else {
-                $pi = $m{pi};
             }
 
-            if (defined $m{nwidth}) {
-                $width = $hash->{ $m{nwidth} };
-            } else {
-                $width = $m{width};
+            if (defined $nwidth) {
+                $width = $hash->{$nwidth};
             }
 
-            if (defined $m{nprec}) {
-                $prec = $hash->{ $m{nprec} };
-            } else {
-                $prec = $m{prec};
+            if (defined $nprec) {
+                $prec = $hash->{$nprec};
             }
 
             $res = join("",
                 grep {defined} (
                     "%",
-                    $pi, $m{flags}, $m{vflag},
-                    $width, $m{dot}, $prec, $m{conv})
+                    $pi, $flags, $vflag,
+                    $width, $dot, $prec, $conv)
                 );
         } else {
             my $i = @args + 1;
