@@ -110,7 +110,7 @@ sub sprintfn {
             $res = "\%${i}\$s";
         }
         $res;
-    }xeg;
+    }xego;
 
     # DEBUG
     #use Data::Dump; dd [$format, @args];
