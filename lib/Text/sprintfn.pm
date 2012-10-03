@@ -106,7 +106,7 @@ sub sprintfn {
                 );
         } else {
             my $i = @args + 1;
-            push @args, $1;
+            push @args, $all;
             $res = "\%${i}\$s";
         }
         $res;
