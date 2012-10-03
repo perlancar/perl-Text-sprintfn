@@ -4,8 +4,7 @@ Revision history for Text-sprintfn
 
         No functional changes. Faster performance by avoiding using named
         capture in regex. Benchmark on a simple format: sprintfn("%(a)s%s%s",
-        {a=>1, b=>9}, 2, 3), shows increase from around 19k/s to 49k/sec (about
-        150% speed increase).
+        {a=>1, b=>9}, 2, 3), shows increase from around 19k/s to 49k/sec (150%).
 
 
 0.04    2011-11-01 (SHARYANTO)
