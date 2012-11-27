@@ -1,5 +1,11 @@
 Revision history for Text-sprintfn
 
+0.06    2012-11-27 (SHARYANTO)
+
+        No functional changes. Fix a few typos in POD and add sections How It
+        Works, Downsides, Todos.
+
+
 0.05    2012-10-03 (SHARYANTO)
 
         No functional changes. Faster performance by avoiding using named
