@@ -197,7 +197,7 @@ Equivalent to: print sprintfn($fmt, ...).
 
 =head1 RATIONALE
 
-There exists other CPAN modules for string formatting with named parameter
+There exist other CPAN modules for string formatting with named parameter
 support. Two of such modules are L<String::Formatter> and
 L<Text::Sprintf::Named>. This module is far simpler to use and retains all of
 the features of Perl's sprintf() (which we like, or perhaps hate, but
@@ -207,6 +207,25 @@ String::Formatter requires you to create a new formatter function first.
 Text::Sprintf::Named also accordingly requires you to instantiate an object
 first. There is currently no way to mix named and positional parameters. And you
 don't get the full features of sprintf().
+
+
+=head1 HOW IT WORKS
+
+Text::sprintfn works by converting the format string into sprintf format, i.e.
+replacing the named parameters like C<%(foo)s> to something like C<%11$s>.
+
+
+=head1 DOWNSIDES
+
+Currently the main downside is speed. On my computer, sprintfn() is about two
+orders of magnitude slower than plain sprintf(). A simple benchmark on my PC
+(Core i5-2400 @ 3.1GHz):
+
+ $ bench -MText::sprintfn -n -2 'sprintf("%s %d %d", "one", 2, 3)' 'sprintfn("%(str)s %d %d", {str=>"one"}, 2, 3)'
+ Benchmarking a => sub { sprintf("%s %d %d", "one", 2, 3) }, b => sub { sprintfn("%(str)s %d %d", {str=>"one"}, 2, 3) } ...
+ a: 13666654 calls (6831551/s), 2.001s (0.0001ms/call)
+ b: 72461 calls (35045/s), 2.068s (0.0285ms/call)
+ Fastest is a (194.9x b)
 
 
 =head1 TIPS AND TRICKS
@@ -243,6 +262,11 @@ or create a tied hash which can consult hashes for you:
 
  tie %h, 'Your::Module', \%h1, \%h2, \%h3;
  printfn $format, \%h, ...;
+
+
+=head1 TODOS
+
+Some sort of caching.
 
 
 =head1 SEE ALSO
