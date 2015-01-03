@@ -1,5 +1,12 @@
 Revision history for Text-sprintfn
 
+0.07    2015-01-03 (PERLANCAR)
+
+	- No functional changes.
+
+	- Rebuild (Generate TODO.md).
+
+
 0.06    2012-11-27 (SHARYANTO)
 
         - No functional changes. Fix a few typos in POD and add sections How It
