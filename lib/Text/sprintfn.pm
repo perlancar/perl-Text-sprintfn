@@ -264,11 +264,6 @@ or create a tied hash which can consult hashes for you:
  printfn $format, \%h, ...;
 
 
-=head1 TODOS
-
-Some sort of caching.
-
-
 =head1 SEE ALSO
 
 sprintf() section on L<perlfunc>
