@@ -217,15 +217,10 @@ replacing the named parameters like C<%(foo)s> to something like C<%11$s>.
 
 =head1 DOWNSIDES
 
-Currently the main downside is speed. On my computer, sprintfn() is about two
-orders of magnitude slower than plain sprintf(). A simple benchmark on my PC
-(Core i5-2400 @ 3.1GHz):
+Currently the main downside is speed. C<sprintfn()> is about 2-3 orders of
+magnitude slower than C<sprintf()>. A sample benchmark:
 
- $ bench -MText::sprintfn -n -2 'sprintf("%s %d %d", "one", 2, 3)' 'sprintfn("%(str)s %d %d", {str=>"one"}, 2, 3)'
- Benchmarking a => sub { sprintf("%s %d %d", "one", 2, 3) }, b => sub { sprintfn("%(str)s %d %d", {str=>"one"}, 2, 3) } ...
- a: 13666654 calls (6831551/s), 2.001s (0.0001ms/call)
- b: 72461 calls (35045/s), 2.068s (0.0285ms/call)
- Fastest is a (194.9x b)
+# COMMAND: perl devscripts/bench
 
 
 =head1 TIPS AND TRICKS
