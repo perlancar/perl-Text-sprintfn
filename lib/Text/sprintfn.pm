@@ -218,9 +218,8 @@ replacing the named parameters like C<%(foo)s> to something like C<%11$s>.
 =head1 DOWNSIDES
 
 Currently the main downside is speed. C<sprintfn()> is about 2-3 orders of
-magnitude slower than C<sprintf()>. A sample benchmark:
-
-# COMMAND: perl devscripts/bench
+magnitude slower than C<sprintf()>. See L<Bencher::Scenario::Textsprintfn> for
+benchmarks.
 
 
 =head1 TIPS AND TRICKS
