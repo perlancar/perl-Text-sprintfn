@@ -1,3 +1,5 @@
+## no critic: Modules::ProhibitAutomaticExportation
+
 package Text::sprintfn;
 
 use 5.010001;
